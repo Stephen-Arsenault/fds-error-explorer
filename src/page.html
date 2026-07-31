@@ -3,326 +3,289 @@
   :root {
     color-scheme: light;
 
-    --ground:     #f4f5f6;
-    --surface:    #ffffff;
-    --surface-2:  #f7f8f9;
-    --ink:        #16181c;
-    --ink-2:      #4d525c;
-    --ink-3:      #7b818c;
-    --rule:       #e2e5e9;
-    --rule-2:     #cfd4da;
-    --accent:     #1f5fa9;
+    --paper:    #fbfaf7;
+    --paper-2:  #f2efe8;
+    --ink:      #16161a;
+    --ink-2:    #4a4a53;
+    --ink-3:    #7d7d87;
+    --rule:     #ded8ce;
+    --rule-2:   #c2bbae;
 
-    --o-drive:    #1f5fa9;
-    --o-identity: #b2521c;
-    --o-media:    #4a3aa7;
-    --o-write:    #0f7355;
-    --o-gate:     #8a6500;
+    --o-drive:    #1c4f8c;
+    --o-identity: #9a4413;
+    --o-media:    #4b2e83;
+    --o-write:    #10603f;
+    --o-gate:     #855400;
 
-    --crt-bg:     #14161c;
-    --crt-fg:     #f4f4f2;
-    --crt-acc:    #e8b100;
+    --screen-bg: #1a1a1d;
+    --screen-fg: #f2f0ea;
+    --screen-hi: #e8b100;
 
-    --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+    /* an editorial serif wherever one exists, in preference order */
+    --serif: Charter, "Bitstream Charter", "Iowan Old Style", "Source Serif 4",
+             "Source Serif Pro", Georgia, "DejaVu Serif", serif;
     --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-
-    --shadow-sm: 0 1px 2px rgba(22,24,28,0.05);
-    --shadow-md: 0 1px 3px rgba(22,24,28,0.06), 0 8px 24px rgba(22,24,28,0.05);
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, "DejaVu Sans Mono", monospace;
   }
 
   * { box-sizing: border-box; }
 
   body {
     margin: 0;
-    background: var(--ground);
+    background: var(--paper);
     color: var(--ink);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.65;
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
-  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 40px 64px; }
-  @media (max-width: 700px) { .wrap { padding: 0 20px 72px; } }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 44px 80px; }
+  @media (max-width: 700px) { .wrap { padding: 0 22px 64px; } }
+
+  /* ---------- small label, used sparingly ---------- */
+  .lbl {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
 
   /* ---------- masthead ---------- */
   .masthead {
-    padding: 22px 0 18px;
-    border-bottom: 1px solid var(--rule);
-    margin-bottom: 28px;
+    border-bottom: 2px solid var(--ink);
+    padding: 30px 0 14px;
+    margin-bottom: 34px;
   }
-  .eyebrow {
+  .masthead h1 {
+    font-size: clamp(30px, 4.4vw, 44px);
+    line-height: 1.02;
+    letter-spacing: -0.018em;
+    font-weight: 600;
+    margin: 0;
+  }
+  .masthead .kicker {
     font-family: var(--mono);
     font-size: 11px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-3);
     margin: 0 0 10px;
   }
-  h1 {
-    font-size: 30px;
-    line-height: 1.2;
-    letter-spacing: -0.021em;
-    font-weight: 600;
-    margin: 0;
-  }
 
-  /* ---------- legend ---------- */
-  .legendrow {
-    display: flex;
-    align-items: baseline;
-    gap: 8px 22px;
-    flex-wrap: wrap;
-    margin-top: 18px;
-    padding-top: 16px;
-    border-top: 1px solid var(--rule);
-  }
-  .legendlabel {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-  }
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; }
-  .lgkey {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13.5px;
-    color: var(--ink-2);
-  }
-  .swatch {
-    width: 11px; height: 11px;
-    border-radius: 2px;
-    background: var(--k);
-    flex: none;
-  }
-  .lgkey .n { color: var(--ink); font-weight: 500; }
-
-  /* ---------- two-column workspace ---------- */
+  /* ---------- workspace ---------- */
   .work {
     display: grid;
-    grid-template-columns: minmax(0, 468px) minmax(0, 1fr);
-    gap: 36px;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    gap: 0 52px;
     align-items: start;
   }
-  @media (max-width: 1000px) {
-    .work { grid-template-columns: 1fr; gap: 28px; }
-  }
+  @media (max-width: 1000px) { .work { grid-template-columns: 1fr; gap: 36px; } }
 
-  .gridcard {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    padding: 22px;
-    box-shadow: var(--shadow-sm);
-  }
-  .gridcard h2 {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    font-weight: 500;
-    margin: 0 0 16px;
-  }
+  .index { position: sticky; top: 26px; }
+  @media (max-width: 1000px) { .index { position: static; } }
+  .index > .lbl { margin-bottom: 12px; }
 
+  /* an index, not a panel of buttons: entries sit on the page and are
+     ruled off like a contents list */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(94px, 1fr));
+    column-gap: 20px;
+    border-top: 1px solid var(--rule);
   }
 
   .codebtn {
-    font-family: var(--mono);
-    background: var(--surface);
+    font-family: inherit;
+    background: transparent;
     color: var(--ink);
-    border: 1px solid var(--rule-2);
-    border-radius: 6px;
-    padding: 12px 12px 11px;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    border-radius: 0;
+    padding: 8px 6px 9px;
+    margin: 0;
     cursor: pointer;
     text-align: left;
     display: grid;
-    gap: 5px;
+    gap: 1px;
     align-content: start;
-    min-height: 78px;
-    transition: border-color 110ms ease, box-shadow 110ms ease, background 110ms ease;
+    transition: background 90ms linear;
   }
   .codebtn .bcode {
     font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    font-variant-numeric: lining-nums tabular-nums;
+    line-height: 1.15;
     color: var(--b-c);
+    /* a persistent link underline: the affordance has to be there before
+       you hover, not least because touch devices never hover at all */
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: var(--rule-2);
+    text-decoration-color: color-mix(in srgb, var(--b-c) 38%, transparent);
+    transition: text-decoration-color 90ms linear;
   }
   .codebtn .btag {
     font-family: var(--sans);
-    font-size: 11.5px;
-    line-height: 1.32;
+    font-size: 10.5px;
+    line-height: 1.28;
     color: var(--ink-3);
   }
-  .codebtn:hover {
-    border-color: var(--b-c);
-    box-shadow: var(--shadow-sm);
+  .codebtn:hover { background: rgba(22,22,26,0.035); }
+  .codebtn:hover .btag { color: var(--ink-2); }
+  .codebtn:hover .bcode {
+    text-decoration-color: var(--b-c);
+    text-decoration-thickness: 2px;
   }
-  .codebtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .codebtn:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
   .codebtn[aria-pressed="true"] {
     background: var(--b-c);
-    border-color: var(--b-c);
-    box-shadow: var(--shadow-sm);
+    border-bottom-color: var(--b-c);
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: -8px;
+    margin-right: -8px;
   }
-  .codebtn[aria-pressed="true"] .bcode { color: #fff; }
-  .codebtn[aria-pressed="true"] .btag { color: rgba(255,255,255,0.86); }
+  .codebtn[aria-pressed="true"] .bcode { color: var(--paper); text-decoration: none; }
+  .codebtn[aria-pressed="true"]:hover { background: var(--b-c); }
+  .codebtn[aria-pressed="true"] .btag { color: rgba(255,255,255,0.8); }
   @media (prefers-reduced-motion: reduce) { .codebtn { transition: none; } }
 
-  /* mobile: tighter buttons so more codes fit per row (tap target stays >=44px) */
-  @media (max-width: 700px) {
-    .gridcard { padding: 16px; }
-    .grid { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: 6px; }
-    .codebtn { padding: 6px 4px; min-height: 56px; gap: 2px; border-radius: 5px; }
-    .codebtn .bcode { font-size: 11.5px; letter-spacing: -0.02em; }
-    .codebtn .btag { font-size: 9.5px; line-height: 1.22; }
+  .legendrow {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
   }
+  .legendrow > .lbl { margin-bottom: 9px; }
+  .legend { display: grid; gap: 5px; }
+  .lgkey {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--sans); font-size: 12.5px; color: var(--ink-2);
+  }
+  .swatch { width: 9px; height: 9px; background: var(--k); flex: none; position: relative; top: -1px; }
 
-  /* ---------- detail panel ---------- */
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    box-shadow: var(--shadow-md);
-    padding: 26px 30px 30px;
-    position: sticky;
-    top: 24px;
-    scroll-margin-top: 20px;
-  }
-  @media (max-width: 1000px) { .panel { position: static; padding: 26px 24px 30px; } }
+  /* ---------- the article ---------- */
+  .panel { max-width: 68ch; }
+  .panel:focus { outline: none; }
 
   .p-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 252px;
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) 228px;
+    gap: 34px;
     align-items: start;
-    padding-bottom: 20px;
-    margin-bottom: 22px;
+    padding-bottom: 22px;
     border-bottom: 1px solid var(--rule);
   }
-  @media (max-width: 620px) { .p-head { grid-template-columns: 1fr; gap: 22px; } }
+  @media (max-width: 640px) { .p-head { grid-template-columns: 1fr; gap: 22px; } }
 
-  .p-chip {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-weight: 600;
-    color: #fff;
-    background: var(--p-c);
-    border-radius: 3px;
-    padding: 3px 9px;
-    margin-bottom: 16px;
+  .p-cat {
+    display: flex; align-items: baseline; gap: 7px;
+    font-family: var(--sans); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--p-c); margin: 0 0 14px;
   }
+  .p-cat .dot { width: 9px; height: 9px; background: var(--p-c); flex: none; position: relative; top: 0; }
   .p-code {
     font-family: var(--mono);
-    font-size: 40px;
+    font-size: 15px;
     font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.015em;
-    margin: 0 0 12px;
-    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    margin: 0 0 6px;
   }
   .p-title {
-    font-size: 20px;
+    font-size: clamp(26px, 3.2vw, 34px);
     font-weight: 600;
+    line-height: 1.14;
+    letter-spacing: -0.016em;
     margin: 0;
-    line-height: 1.34;
-    letter-spacing: -0.011em;
-    max-width: 30ch;
+    text-wrap: balance;
   }
 
-  .crt {
-    background: var(--crt-bg);
-    border-radius: 6px;
-    height: 108px;               /* fixed: the preview must not resize between codes */
-    padding: 0 16px;
+  .screen {
+    background: var(--screen-bg);
+    color: var(--screen-fg);
+    font-family: var(--mono);
+    text-align: center;
+    height: 94px;
+    padding: 0 14px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    text-align: center;
-    font-family: var(--mono);
-    color: var(--crt-fg);
-    position: relative;
-    overflow: hidden;
   }
-  .crt::after {
-    content: "";
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(to bottom, rgba(255,255,255,0.045) 0 1px, transparent 1px 3px);
-    pointer-events: none;
+  .screen .l1 {
+    font-size: 12px; letter-spacing: 0.16em; font-weight: 700;
+    height: 14px; line-height: 14px; margin-bottom: 12px;
   }
-  /* both message states occupy an identical line box, whatever their font size */
-  .crt .l1 {
-    font-size: 13px; letter-spacing: 0.17em; font-weight: 700;
-    height: 15px; line-height: 15px; margin-bottom: 14px;
+  .screen .l1.blank {
+    font-family: var(--serif); font-style: italic; font-weight: 400;
+    font-size: 11.5px; letter-spacing: 0; color: #74747f;
   }
-  .crt .l1.blank {
-    color: #4a4d58; letter-spacing: 0.06em;
-    font-weight: 400; font-style: italic; font-size: 11px;
-  }
-  .crt .l2 {
-    font-size: 16px; letter-spacing: 0.17em; font-weight: 700;
-    height: 21px; line-height: 21px;
-  }
-  .crt .l2 .num { color: var(--crt-acc); border-bottom: 2px solid var(--crt-acc); }
-  .screenwrap { display: grid; gap: 10px; }
-  .ctx {
-    display: grid; gap: 3px;
-    border-left: 2px solid var(--ctx-c);
-    padding-left: 11px;
-  }
-  .ctx.boot { --ctx-c: #0f7355; }
-  .ctx.both { --ctx-c: #1f5fa9; }
-  .ctx.game { --ctx-c: var(--rule-2); }
-  .ctx-t {
-    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-    text-transform: uppercase; font-weight: 600; color: var(--ctx-c);
-  }
-  .ctx.game .ctx-t { color: var(--ink-3); }
-  .ctx-d { font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
-
-  .p-body { display: grid; gap: 22px; }
-  .blk h3 {
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+  .screen .l2 { font-size: 15px; letter-spacing: 0.16em; font-weight: 700; height: 19px; line-height: 19px; }
+  .screen .l2 .num { color: var(--screen-hi); }
+  .screen-cap {
+    font-family: var(--sans);
+    font-size: 11.5px;
+    line-height: 1.5;
     color: var(--ink-3);
-    margin: 0 0 10px;
-    font-weight: 500;
+    margin: 9px 0 0;
   }
-  .blk p { margin: 0 0 12px; font-size: 15.5px; color: var(--ink-2); max-width: 76ch; }
-  .blk p:last-child { margin-bottom: 0; }
+  .screen-cap b { color: var(--ink-2); font-weight: 600; }
 
-  .notes { margin: 0; padding: 0; list-style: none; display: grid; gap: 11px; }
+  .p-body { padding-top: 22px; }
+  .p-body p { margin: 0 0 15px; color: var(--ink-2); }
+  .p-body p:last-child { margin-bottom: 0; }
+  .runin {
+    color: var(--ink);
+    font-weight: 600;
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+    margin-right: 2px;
+  }
+
+  .notes-block {
+    margin-top: 22px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .notes-block > .lbl { margin-bottom: 10px; }
+  .notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 9px;
+  }
   .notes li {
-    font-size: 14.5px; color: var(--ink-2);
-    padding-left: 20px; position: relative; max-width: 76ch;
+    font-size: 15.5px;
+    color: var(--ink-2);
+    padding-left: 17px;
+    position: relative;
   }
   .notes li::before {
-    content: ""; position: absolute; left: 0; top: 0.62em;
-    width: 11px; height: 2px; background: var(--p-c); border-radius: 1px;
+    content: "";
+    position: absolute; left: 0; top: 0.66em;
+    width: 8px; height: 1px; background: var(--rule-2);
   }
 
+  /* ---------- technical detail ---------- */
   .techbox {
+    margin-top: 24px;
     border-top: 1px solid var(--rule);
-    padding-top: 16px;
+    padding-top: 14px;
   }
   .techbox > summary {
     cursor: pointer;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.14em;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--ink-3);
     list-style: none;
@@ -331,178 +294,126 @@
     gap: 8px;
   }
   .techbox > summary::-webkit-details-marker { display: none; }
-  .techbox > summary::before {
-    content: "\002B";
-    font-size: 12px;
-    line-height: 1;
-    color: var(--accent);
-  }
+  .techbox > summary::before { content: "\002B"; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
   .techbox[open] > summary::before { content: "\2212"; }
   .techbox > summary:hover { color: var(--ink); }
-  .techbox > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  .tech-concept {
-    margin: 12px 0 14px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: var(--ink-2);
-    max-width: 74ch;
-  }
+  .techbox > summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .tech-concept { margin: 14px 0 14px; font-size: 15.5px; color: var(--ink-2); }
   .tech {
-    background: var(--surface-2);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    padding: 18px 20px;
-    display: grid;
-    grid-template-columns: 118px minmax(0, 1fr);
-    gap: 10px 20px;
-    align-items: baseline;
     margin: 0;
-  }
-  @media (max-width: 620px) { .tech { grid-template-columns: 1fr; gap: 3px 0; } }
-  .tech dt {
-    font-family: var(--mono); font-size: 10px; letter-spacing: 0.11em;
-    text-transform: uppercase; color: var(--ink-3);
-  }
-  .tech dd {
-    margin: 0; font-family: var(--mono); font-size: 12.5px;
-    color: var(--ink-2); line-height: 1.6;
-  }
-  @media (max-width: 620px) { .tech dd { margin-bottom: 14px; } .tech dd:last-of-type { margin-bottom: 0; } }
-
-  /* ---------- primer, moved below the tool ---------- */
-  .primer {
-    margin-top: 44px;
-    padding-top: 26px;
-    border-top: 1px solid var(--rule);
-  }
-  .primer h2 {
-    font-size: 19px; font-weight: 600; margin: 0 0 14px;
-    letter-spacing: -0.011em;
-  }
-  .primer-cols {
+    background: var(--paper-2);
+    padding: 15px 17px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
+    grid-template-columns: 104px minmax(0, 1fr);
+    gap: 7px 16px;
+    align-items: baseline;
   }
-  .primer p { margin: 0 0 12px; font-size: 14.5px; color: var(--ink-2); }
-  .primer p:last-child { margin-bottom: 0; }
+  @media (max-width: 640px) { .tech { grid-template-columns: 1fr; gap: 2px 0; } }
+  .tech dt {
+    font-family: var(--sans); font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .tech dd { margin: 0; font-family: var(--mono); font-size: 12.5px; line-height: 1.55; color: var(--ink-2); }
+  @media (max-width: 640px) { .tech dd { margin-bottom: 11px; } .tech dd:last-of-type { margin-bottom: 0; } }
+
+  /* ---------- primer & footer ---------- */
+  .primer {
+    margin-top: 68px;
+    padding-top: 26px;
+    border-top: 2px solid var(--ink);
+  }
+  .primer h2 { font-size: 21px; font-weight: 600; margin: 0 0 16px; letter-spacing: -0.012em; }
+  .primer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 26px 40px; }
+  .primer p { margin: 0; font-size: 15.5px; color: var(--ink-2); }
   .primer strong { color: var(--ink); font-weight: 600; }
 
   footer {
-    margin-top: 32px;
+    margin-top: 44px;
     border-top: 1px solid var(--rule);
-    padding-top: 18px;
-    font-size: 13px;
+    padding-top: 20px;
+    font-family: var(--sans);
+    font-size: 12.5px;
     color: var(--ink-3);
-    line-height: 1.7;
+    line-height: 1.65;
   }
-  /* full column width, but split so each measure stays readable */
-  .footer-cols {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 12px 40px;
-  }
-  .footer-cols p { margin: 0; max-width: 62ch; }
-  footer a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
-  footer details { margin-top: 11px; }
+  .footer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px 44px; }
+  .footer-cols p { margin: 0; max-width: 60ch; }
+  footer a { color: var(--ink-2); text-decoration: underline; text-underline-offset: 2px; }
+  footer a:hover { color: var(--ink); }
+  footer details { margin-top: 12px; }
   footer summary {
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-2);
-    list-style: none;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    cursor: pointer; font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink-3);
+    list-style: none; display: flex; align-items: baseline; gap: 8px;
   }
   footer summary::-webkit-details-marker { display: none; }
-  footer summary::before {
-    content: "\002B";
-    font-size: 12px;
-    line-height: 1;
-    color: var(--accent);
-  }
+  footer summary::before { content: "\002B"; font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
   footer details[open] summary::before { content: "\2212"; }
   footer summary:hover { color: var(--ink); }
-  footer summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-  footer details ul {
-    margin: 10px 0 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    gap: 8px;
-  }
-  footer details li {
-    position: relative;
-    padding-left: 15px;
-    max-width: 62ch;
-  }
+  footer summary:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  footer details ul { margin: 11px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+  footer details li { position: relative; padding-left: 15px; max-width: 60ch; }
   footer details li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.72em;
-    width: 8px;
-    height: 1px;
-    background: var(--rule-2);
+    content: ""; position: absolute; left: 0; top: 0.72em;
+    width: 8px; height: 1px; background: var(--rule-2);
   }
   footer details strong { color: var(--ink-2); font-weight: 600; }
-  footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   code {
-    font-family: var(--mono); font-size: 0.9em;
-    background: var(--surface-2); border: 1px solid var(--rule);
-    padding: 0 4px; border-radius: 3px; white-space: nowrap;
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--paper-2); padding: 0 4px; white-space: nowrap;
+  }
+
+  /* mobile: tighter index */
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); column-gap: 12px; }
+    .codebtn { padding: 7px 2px 8px; }
+    .codebtn .bcode { font-size: 13.5px; }
+    .codebtn .btag { font-size: 9.5px; line-height: 1.22; }
+    .legend { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
   }
 </style>
 
 <div class="wrap">
 
-  <div class="masthead">
-    <p class="eyebrow">Famicom Disk System &middot; disksys.rom</p>
+  <header class="masthead">
+    <p class="kicker">Famicom Disk System &middot; disksys.rom</p>
     <h1>Error code reference</h1>
-  </div>
+  </header>
 
   <div class="work">
-    <div class="gridcard">
-      <h2>All error codes</h2>
+    <nav class="index" aria-label="All error codes">
+      <h2 class="lbl">All error codes</h2>
       <div class="grid" id="grid"></div>
       <div class="legendrow">
-        <span class="legendlabel">Where the problem lives</span>
+        <p class="lbl">Where the problem lives</p>
         <div class="legend" id="legend"></div>
       </div>
-    </div>
-    <div class="panel" id="panel" tabindex="-1" aria-live="polite"></div>
+    </nav>
+
+    <article class="panel" id="panel" tabindex="-1" aria-live="polite"></article>
   </div>
 
-  <div class="primer">
+  <section class="primer">
     <h2>How an FDS disk loads</h2>
     <div class="primer-cols">
-      <div>
-        <p>
-          The <strong>Famicom Disk System</strong> was a 1986 add-on that let Nintendo's console load
-          games from a small floppy disk instead of a cartridge. When you switch it on, a program
-          burned into the console-side hardware &mdash; the <strong>BIOS</strong> &mdash; spins up the
-          drive, reads the game off the disk into memory, and starts it.
-        </p>
-      </div>
-      <div>
-        <p>
-          The data on a disk is written as a series of <strong>blocks</strong>, read strictly in
-          order: an identification block naming the game, a count of how many files follow, then for
-          each file a small header followed by the file's data.
-        </p>
-      </div>
-      <div>
-        <p>
-          The BIOS checks something at nearly every step. If a check fails it stops the drive and puts
-          a two-digit number on screen &mdash; sometimes with a word above it, often without. That
-          number is what this page decodes.
-        </p>
-      </div>
+      <p>
+        The <strong>Famicom Disk System</strong> was a 1986 add-on that let Nintendo's console load
+        games from a small floppy disk instead of a cartridge. When you switch it on, a program
+        burned into the console-side hardware &mdash; the <strong>BIOS</strong> &mdash; spins up the
+        drive, reads the game off the disk into memory, and starts it.
+      </p>
+      <p>
+        The data on a disk is written as a series of <strong>blocks</strong>, read strictly in
+        order: an identification block naming the game, a count of how many files follow, then for
+        each file a small header followed by the file's data.
+      </p>
+      <p>
+        The BIOS checks something at nearly every step. If a check fails it stops the drive and puts
+        a two-digit number on screen &mdash; sometimes with a word above it, often without. That
+        number is what this page decodes.
+      </p>
     </div>
-  </div>
+  </section>
 
   <footer>
     <div class="footer-cols">
@@ -559,19 +470,17 @@
 /* ============================================================================
    DATA
    ----------------------------------------------------------------------------
-   Everything renders from the two structures below.
-
-   ORIGINS  key -> { name, css }
+   ORIGINS  key -> { name, css, blurb }
             `css` must match a --o-<key> custom property defined in :root.
-            Colours are chosen dark enough to carry white text when a button
-            is selected; keep that property if you add one.
+            Colours are dark enough to carry pale text when a button is
+            selected; keep that property if you add one.
 
-   CODES    ordered array; array order IS display order (currently ascending
-            by code, which is how someone reads a number off a screen).
+   CODES    ordered array; array order IS display order (ascending by code,
+            which is how someone reads a number off a screen).
      code     string    printed on screen, e.g. "$28"
      origin   string    key into ORIGINS (drives the colour)
      tag      string    2-4 words on the button face
-     title    string    plain-language headline for the panel
+     title    string    plain-language headline
      screen   object    { msg: "DISK SET" } -> that word above ERR.xx
                         { msg: null }       -> blank line above ERR.xx
      when     string    'boot' = raised only by the start-up sequence, so the
@@ -582,8 +491,12 @@
                           the error itself and may show anything, or nothing.
      meaning  string[]  plain-language paragraphs. No jargon, no addresses.
      trigger  string[]  plain-language paragraphs: what makes it happen.
-     notes    string[]  optional gotchas; may mix plain and technical.
-     tech     object    { site, test, extra? } free-form technical footer.
+     notes    string[]  optional gotchas.
+     tech     object    { concept, site, test, extra? } - the technical layer,
+                        collapsed behind an accordion.
+
+   Every entry must stand alone: assume the reader knows nothing about the disk
+   format, and keep format vocabulary out of everything except `tech`.
    ========================================================================== */
 
 const ORIGINS = {
@@ -1093,16 +1006,24 @@ const gridEl   = document.getElementById('grid');
 const legendEl = document.getElementById('legend');
 const panelEl  = document.getElementById('panel');
 
-/* the data is keyed on the raw value ($28); the interface shows ERR.28 */
-const display = code => code.replace(/^\$/, 'ERR.');
+const CTX = {
+  boot: ["Start-up only",
+         "Raised before any game is in control, so this is exactly what the television shows."],
+  both: ["At start-up, and during play",
+         "Exactly this at start-up. A game that hits it mid-play receives the error itself and may show something different."],
+  game: ["Only from a running game",
+         "Drawn here in the system's own format. A game receives this error itself and may show its own message, or none at all."]
+};
 
 function esc(s) {
   return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 }
 
+const display = code => code.replace(/^\$/, 'ERR.');
+
 legendEl.innerHTML = Object.entries(ORIGINS).map(([key, o]) =>
   `<span class="lgkey" style="--k: var(${o.css})">
-     <span class="swatch"></span><span class="n">${esc(o.name)}</span>
+     <span class="swatch"></span><span>${esc(o.name)}</span>
    </span>`
 ).join('');
 
@@ -1120,30 +1041,26 @@ function screenBlock(entry) {
   const num = entry.code.replace(/^\$/, '');
   const line1 = s.msg
     ? `<div class="l1">${esc(s.msg)}</div>`
-    : `<div class="l1 blank">(no message shown)</div>`;
-  const CTX = {
-    boot: ["Start-up only",
-           "Raised before any game is in control, so this is exactly what the television shows."],
-    both: ["At start-up, and during play",
-           "Exactly this at start-up. A game that hits it mid-play receives the error itself and may show something different."],
-    game: ["Only from a running game",
-           "Drawn here in the system's own format. A game receives this error itself and may show its own message, or none at all."]
-  };
+    : `<div class="l1 blank">no message shown</div>`;
   const w = entry.when || 'game';
-  const ctx = `<div class="ctx ${w}">
-                 <span class="ctx-t">${esc(CTX[w][0])}</span>
-                 <span class="ctx-d">${esc(CTX[w][1])}</span>
-               </div>`;
-  return `<div class="screenwrap">
-            <div class="crt">
+  return `<div>
+            <div class="screen">
               ${line1}
               <div class="l2">ERR.<span class="num">${esc(num)}</span></div>
             </div>
-            ${ctx}
+            <p class="screen-cap"><b>${esc(CTX[w][0])}.</b> ${esc(CTX[w][1])}</p>
           </div>`;
 }
 
-const paras = arr => (arr || []).map(p => `<p>${esc(p)}</p>`).join('');
+/* first paragraph of a section carries a run-in head, the rest run on */
+function section(head, paras) {
+  if (!paras || !paras.length) return '';
+  return paras.map((p, i) =>
+    i === 0
+      ? `<p><b class="runin">${esc(head)}</b> ${esc(p)}</p>`
+      : `<p>${esc(p)}</p>`
+  ).join('');
+}
 
 function render(entry) {
   const o = ORIGINS[entry.origin];
@@ -1151,24 +1068,24 @@ function render(entry) {
   panelEl.style.setProperty('--p-c', `var(${o.css})`);
 
   const notes = (entry.notes && entry.notes.length)
-    ? `<div class="blk">
-         <h3>Worth knowing</h3>
+    ? `<div class="notes-block">
+         <p class="lbl">Also worth knowing</p>
          <ul class="notes">${entry.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>
        </div>`
     : '';
 
   panelEl.innerHTML = `
-    <div class="p-head">
+    <header class="p-head">
       <div>
-        <span class="p-chip">${esc(o.name)}</span>
-        <div class="p-code">${esc(display(entry.code))}</div>
-        <p class="p-title">${esc(entry.title)}</p>
+        <p class="p-cat"><span class="dot"></span>${esc(o.name)}</p>
+        <p class="p-code">${esc(display(entry.code))}</p>
+        <h2 class="p-title">${esc(entry.title)}</h2>
       </div>
       ${screenBlock(entry)}
-    </div>
+    </header>
     <div class="p-body">
-      <div class="blk"><h3>What it means</h3>${paras(entry.meaning)}</div>
-      <div class="blk"><h3>What triggers it</h3>${paras(entry.trigger)}</div>
+      ${section('What it means.', entry.meaning)}
+      ${section('What triggers it.', entry.trigger)}
       ${notes}
       <details class="techbox">
         <summary>Technical detail</summary>
@@ -1198,6 +1115,5 @@ gridEl.addEventListener('click', e => {
   if (btn) select(btn.dataset.code, true);
 });
 
-/* open on the most common code so the panel is never an empty box */
 select(CODES[0].code, false);
 </script>
