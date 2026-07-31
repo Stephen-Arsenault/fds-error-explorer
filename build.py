@@ -130,12 +130,16 @@ def render_static(origins: dict, codes: list) -> str:
             parts.append("    </ul>")
         t = c.get("tech") or {}
         if t:
-            parts.append("    <h4>In the ROM</h4>")
-            parts.append("    <dl>")
+            parts.append("    <details>")
+            parts.append("      <summary>Technical detail</summary>")
+            if t.get("concept"):
+                parts.append(f'      <p>{e(t["concept"])}</p>')
+            parts.append("      <dl>")
             for dt, key in (("Raise site", "site"), ("Condition", "test"), ("Detail", "extra")):
                 if t.get(key):
-                    parts.append(f"      <dt>{dt}</dt><dd>{e(t[key])}</dd>")
-            parts.append("    </dl>")
+                    parts.append(f"        <dt>{dt}</dt><dd>{e(t[key])}</dd>")
+            parts.append("      </dl>")
+            parts.append("    </details>")
         parts.append("  </article>")
     parts.append("</section>")
     return "\n".join(parts)
@@ -179,6 +183,12 @@ STATIC_CSS = """
   }
   .static-entries dt { color: var(--ink-3); text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
   .static-entries dd { margin: 0; color: var(--ink-2); }
+  .static-entries details { margin-top: 14px; }
+  .static-entries summary {
+    cursor: pointer; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .static-entries details p { margin: 10px 0 12px; }
 """
 
 
@@ -227,10 +237,15 @@ def render_llms(origins: dict, codes: list) -> str:
             out.append("")
         t = c.get("tech") or {}
         if t:
-            bits = [f"raise site {t['site']}" if t.get("site") else "",
-                    f"condition: {t['test']}" if t.get("test") else "",
+            out.append("**Technical detail.**")
+            out.append("")
+            if t.get("concept"):
+                out.append(t["concept"])
+                out.append("")
+            bits = [f"Raise site: {t['site']}." if t.get("site") else "",
+                    f"Condition: {t['test']}." if t.get("test") else "",
                     t.get("extra", "")]
-            out.append("**In the ROM.** " + " ".join(b for b in bits if b))
+            out.append(" ".join(b for b in bits if b))
             out.append("")
     return "\n".join(out).rstrip() + "\n"
 

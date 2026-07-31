@@ -335,6 +335,39 @@
     width: 11px; height: 2px; background: var(--p-c); border-radius: 1px;
   }
 
+  .techbox {
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+  }
+  .techbox > summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .techbox > summary::-webkit-details-marker { display: none; }
+  .techbox > summary::before {
+    content: "\002B";
+    font-size: 12px;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .techbox[open] > summary::before { content: "\2212"; }
+  .techbox > summary:hover { color: var(--ink); }
+  .techbox > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .tech-concept {
+    margin: 12px 0 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 74ch;
+  }
   .tech {
     background: var(--surface-2);
     border: 1px solid var(--rule);
@@ -481,6 +514,12 @@
   }
   .static-entries dt { color: var(--ink-3); text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; }
   .static-entries dd { margin: 0; color: var(--ink-2); }
+  .static-entries details { margin-top: 14px; }
+  .static-entries summary {
+    cursor: pointer; font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3);
+  }
+  .static-entries details p { margin: 10px 0 12px; }
 </style>
 </head>
 <body>
@@ -596,12 +635,15 @@
       <li>Push the disk firmly all the way in. That is usually all it takes.</li>
       <li>The system cannot tell 'no disk' apart from 'disk in, switch not pressed'.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E678 DriveReadyWait · $E42A SetupWriteParams · $E757 WriteBlockEnd</dd>
-      <dt>Condition</dt><dd>$4032 bit 0 set</dd>
-      <dt>Detail</dt><dd>Carry gate at $E77C from DriveReadyWait and WriteBlockEnd; return-address discard at $E43E from the API prologue.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>The drive reports its state in a status register at $4032; bit 0 is the disk-present line. The BIOS only reads that bit — nothing in the ROM touches the sensing mechanism itself.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E678 DriveReadyWait · $E42A SetupWriteParams · $E757 WriteBlockEnd</dd>
+        <dt>Condition</dt><dd>$4032 bit 0 set</dd>
+        <dt>Detail</dt><dd>Carry gate at $E77C from DriveReadyWait and WriteBlockEnd; return-address discard at $E43E from the API prologue.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-02">ERR.02 &mdash; The drive isn't receiving proper power</h3>
@@ -616,12 +658,15 @@
       <li>Nothing to do with the disk — this happens before the disk is read.</li>
       <li>Also appears when power is present but not reaching the drive properly.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E669 DriveReadyWait</dd>
-      <dt>Condition</dt><dd>write $F9|$80 → $4026, then EOR $4033, test bit 7</dd>
-      <dt>Detail</dt><dd>Carry gate at $E77C.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Not a voltage measurement. The BIOS drives bit 7 out to the expansion connector at $4026 and reads the same line back from $4033, so what is really being tested is a loopback across that path.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E669 DriveReadyWait</dd>
+        <dt>Condition</dt><dd>write $F9|$80 → $4026, then EOR $4033, test bit 7</dd>
+        <dt>Detail</dt><dd>Carry gate at $E77C.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-03">ERR.03 &mdash; Something tried to save to a protected disk</h3>
@@ -636,12 +681,15 @@
       <li>Hole open = protected. Cover it with tape to allow writing again; the tab does not go back on.</li>
       <li>The drive feels for the tab with a small lever, which can stick when dirty and report protection on a perfectly good disk.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E435 SetupWriteParams</dd>
-      <dt>Condition</dt><dd>$4032 bit 2 set (Protect flag)</dd>
-      <dt>Detail</dt><dd>Reached only when the read/write flag is clear; $E433 BCS skips it for reads. Per the NESdev Wiki the same flag reads 1 for a broken tab or an ejected disk.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>The protect state arrives as bit 2 of the drive status register $4032. That same bit reads 1 for an ejected disk, so at this bit alone the two conditions cannot be told apart.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E435 SetupWriteParams</dd>
+        <dt>Condition</dt><dd>$4032 bit 2 set (Protect flag)</dd>
+        <dt>Detail</dt><dd>Reached only when the read/write flag is clear; $E433 BCS skips it for reads. Per the NESdev Wiki the same flag reads 1 for a broken tab or an ejected disk.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-04">ERR.04 &mdash; The disk was published by someone other than the game expected</h3>
@@ -655,12 +703,15 @@
     <ul>
       <li>Games choose which details to check, so many never produce this at all.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 0 (header offset $0F)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Code comes from the running counter in $08, initialised to 4. Boot template at $EFF5 is FF FF FF FF FF FF 00 00 FF FF.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 0 (header offset $0F)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Code comes from the running counter in $08, initialised to 4. Boot template at $EFF5 is FF FF FF FF FF FF 00 00 FF FF.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-05">ERR.05 &mdash; This disk belongs to a different game</h3>
@@ -673,12 +724,15 @@
     <ul>
       <li>It cannot tell you which part did not match.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, bytes 1–4 (header offsets $10–$13)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>The counter increment at $E46D is suppressed for these four positions.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, bytes 1–4 (header offsets $10–$13)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>The counter increment at $E46D is suppressed for these four positions.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-06">ERR.06 &mdash; The disk is a different revision of the game</h3>
@@ -692,12 +746,15 @@
     <ul>
       <li>Most games do not check this.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 5 (header offset $14)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Boot template byte 5 at $EFF5 is $FF.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 5 (header offset $14)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Boot template byte 5 at $EFF5 is $FF.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-07">ERR.07 &mdash; The disk is in the wrong way round — flip it</h3>
@@ -712,12 +769,15 @@
       <li>If a game asks you to flip and you put the same side back in, you will see this again.</li>
       <li>One of only four errors that names the problem on screen instead of showing a bare number.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 6 (header offset $15)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Message string 'A.B SIDE' at $F02E+16. Boot template byte 6 at $EFF5 is $00, not a wildcard.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 6 (header offset $15)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Message string 'A.B SIDE' at $F02E+16. Boot template byte 6 at $EFF5 is $00, not a wildcard.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-08">ERR.08 &mdash; Wrong disk in a multi-disk set</h3>
@@ -731,12 +791,15 @@
     <ul>
       <li>The number on the label is the one the game means.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 7 (header offset $16)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Message string 'DISK NO.' at $F02E+24. Boot template byte 7 at $EFF5 is $00, not a wildcard.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 7 (header offset $16)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Message string 'DISK NO.' at $F02E+24. Boot template byte 7 at $EFF5 is $00, not a wildcard.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-09">ERR.09 &mdash; This is the wrong kind of disk</h3>
@@ -750,12 +813,15 @@
     <ul>
       <li>Both kinds are perfectly good disks. This is not damage.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 8 (header offset $17)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Documented as 'disk type (FMC)': $01 for FMC blue-disk releases, $00 otherwise.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 8 (header offset $17)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Documented as 'disk type (FMC)': $01 for FMC blue-disk releases, $00 otherwise.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-10">ERR.10 &mdash; An unidentified detail on the disk does not match</h3>
@@ -769,12 +835,15 @@
     <ul>
       <li>Very rarely seen.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 9 (header offset $18)</dd>
-      <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
-      <dt>Detail</dt><dd>Documented as unknown, $00 in all known games. $E45B rewrites the counter value $0A to $10 before the gate.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E445 CheckDiskHeader, byte 9 (header offset $18)</dd>
+        <dt>Condition</dt><dd>disk byte ≠ caller template byte, and template byte ≠ $FF</dd>
+        <dt>Detail</dt><dd>Documented as unknown, $00 in all known games. $E45B rewrites the counter value $0A to $10 before the gate.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-20">ERR.20 &mdash; The game loaded fine but didn't show the required Nintendo screen</h3>
@@ -788,12 +857,15 @@
     <ul>
       <li>The screen still reads DISK TROUBLE, which is misleading — the disk is fine.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$EF6A RESET (raised) → $F431 CopyrightCheck (decided)</dd>
-      <dt>Condition</dt><dd>video memory $2800–$28DF ≠ tile table at $ED37</dd>
-      <dt>Detail</dt><dd>$ED37 spells 'NINTENDO' and 'FAMILY CO…' in the BIOS tile encoding.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>The check compares $E0 bytes of the game's own nametable at VRAM $2800 against a tile table at $ED37. It runs from RESET after LoadFiles has already returned success, which is why it is a boot-path gate and unreachable from a running game.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$EF6A RESET (raised) → $F431 CopyrightCheck (decided)</dd>
+        <dt>Condition</dt><dd>video memory $2800–$28DF ≠ tile table at $ED37</dd>
+        <dt>Detail</dt><dd>$ED37 spells 'NINTENDO' and 'FAMILY CO…' in the BIOS tile encoding.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-21">ERR.21 &mdash; This does not look like a Famicom disk</h3>
@@ -807,12 +879,15 @@
     <ul>
       <li>What you would expect from a blank disk, a badly worn one, or a disk from another system.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E6FA ReadVerifyDiskInfo</dd>
-      <dt>Condition</dt><dd>disk byte ≠ table byte at $E6D5+Y, for Y = $0D down to 0</dd>
-      <dt>Detail</dt><dd>The table stores '*NINTENDO-HVC*' reversed, because the loop counts down while the disk streams forward.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>The 14-byte magic string is held reversed at $E6D5, because the compare loop counts Y down from $0D while the disk streams forward. One constant code covers all fourteen comparisons.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E6FA ReadVerifyDiskInfo</dd>
+        <dt>Condition</dt><dd>disk byte ≠ table byte at $E6D5+Y, for Y = $0D down to 0</dd>
+        <dt>Detail</dt><dd>The table stores '*NINTENDO-HVC*' reversed, because the loop counts down while the disk streams forward.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-22">ERR.22 &mdash; The part of the disk that names the game is missing</h3>
@@ -826,12 +901,15 @@
     <ul>
       <li>ERR.22 to ERR.25 are the same check at four points in the sequence.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
-      <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
-      <dt>Detail</dt><dd>Code = block type + $21 via CLC / ADC #$21.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
+        <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
+        <dt>Detail</dt><dd>Code = block type + $21 via CLC / ADC #$21.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-23">ERR.23 &mdash; The list of files on the disk is missing</h3>
@@ -841,12 +919,15 @@
     <p>The disk named itself correctly, so it is the right disk and it is readable. The data stops making sense immediately after that.</p>
     <h4>What triggers it</h4>
     <p>Data is stored as labelled sections read in a fixed order, and this section's label was not what should come next.</p>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
-      <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
-      <dt>Detail</dt><dd>Code = block type + $21.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
+        <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
+        <dt>Detail</dt><dd>Code = block type + $21.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-24">ERR.24 &mdash; A file's label is missing</h3>
@@ -860,12 +941,15 @@
     <ul>
       <li>The label and the contents are stored separately, which is why a missing label and missing contents are different numbers.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
-      <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
-      <dt>Detail</dt><dd>Code = block type + $21.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
+        <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
+        <dt>Detail</dt><dd>Code = block type + $21.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-25">ERR.25 &mdash; A file's contents are missing</h3>
@@ -875,12 +959,15 @@
     <p>This is the furthest into a disk the related errors reach — everything up to this point read correctly.</p>
     <h4>What triggers it</h4>
     <p>Files are stored as a label followed by the contents. The two have become separated.</p>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
-      <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
-      <dt>Detail</dt><dd>Code = block type + $21.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E697 ReadBlockType</dd>
+        <dt>Condition</dt><dd>tag byte read ≠ expected block type</dd>
+        <dt>Detail</dt><dd>Code = block type + $21.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-26">ERR.26 &mdash; A save did not record properly</h3>
@@ -894,12 +981,15 @@
     <ul>
       <li>It cannot tell you which part of the save failed.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E5C0 · $E5D2 · $E5FC · $E62B, all in WriteVerifyBlock</dd>
-      <dt>Condition</dt><dd>byte read back ≠ byte written</dd>
-      <dt>Detail</dt><dd>All four go through the zero gate at $E77F.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>WriteVerifyBlock re-reads each written byte and compares it against whichever source it came from — the file header, the caller's parameter list, CPU RAM via [$0A], or PPUDATA. Four separate compare sites share the one code.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E5C0 · $E5D2 · $E5FC · $E62B, all in WriteVerifyBlock</dd>
+        <dt>Condition</dt><dd>byte read back ≠ byte written</dd>
+        <dt>Detail</dt><dd>All four go through the zero gate at $E77F.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-27">ERR.27 &mdash; Part of the disk read back damaged</h3>
@@ -913,12 +1003,15 @@
     <ul>
       <li>Cleaning the disk is worth trying. Beyond that, the data itself has degraded.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E71E CheckBlockEnd</dd>
-      <dt>Condition</dt><dd>$4030 bit 4 set after arming CRC control</dd>
-      <dt>Detail</dt><dd>Reached by a raw branch to $E781, bypassing both throw gates.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Each block ends with a CRC. The BIOS arms CRC-check mode via FDS_CONTROL bit 4, reads one further byte, then tests $4030 bit 4. A read is attempted twice ($0005 = 2) before the code escapes to the caller.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E71E CheckBlockEnd</dd>
+        <dt>Condition</dt><dd>$4030 bit 4 set after arming CRC control</dd>
+        <dt>Detail</dt><dd>Reached by a raw branch to $E781, bypassing both throw gates.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-28">ERR.28 &mdash; Data stopped sooner than expected</h3>
@@ -932,12 +1025,15 @@
     <ul>
       <li>Different from ERR.27: this is data that is too short, that is data that is wrong.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E709 CheckBlockEnd · $E766 ReadBlockToRAM</dd>
-      <dt>Condition</dt><dd>$4030 bit 6 set while bytes remain</dd>
-      <dt>Detail</dt><dd>Both sites branch raw to $E781.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>$4030 bit 6 is the end-of-block mark. Two sites in the read path test it — the block trailer check and the byte-copy loop — and both branch straight into the abort at $E781, bypassing the usual gates.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E709 CheckBlockEnd · $E766 ReadBlockToRAM</dd>
+        <dt>Condition</dt><dd>$4030 bit 6 set while bytes remain</dd>
+        <dt>Detail</dt><dd>Both sites branch raw to $E781.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-29">ERR.29 &mdash; The disk ran out of room while saving</h3>
@@ -951,12 +1047,15 @@
       <li>The save is incomplete and the disk is left partly written.</li>
       <li>ERR.28 is this same thing happening while loading.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E72C WriteBlockEnd</dd>
-      <dt>Condition</dt><dd>$4030 bit 6 set during a write</dd>
-      <dt>Detail</dt><dd>Raw branch to $E781.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>The same $4030 bit 6 end-of-block mark that produces ERR.28, tested on the write side instead.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E72C WriteBlockEnd</dd>
+        <dt>Condition</dt><dd>$4030 bit 6 set during a write</dd>
+        <dt>Detail</dt><dd>Raw branch to $E781.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-30">ERR.30 &mdash; The drive stopped being ready during a save</h3>
@@ -970,12 +1069,15 @@
       <li>The pause is a fixed length rather than a measured one, so a marginal drive may pass or fail it inconsistently.</li>
       <li>The screen shows only the number, with no message above it.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E743 WriteBlockEnd</dd>
-      <dt>Condition</dt><dd>$4032 bit 1 set after a busy wait of ~178 iterations</dd>
-      <dt>Detail</dt><dd>Raw branch to $E781.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>Tests $4032 bit 1 (drive not ready) after a busy wait of roughly 178 loop iterations. That delay is instruction-counted rather than timed, so its real duration varies with the machine.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E743 WriteBlockEnd</dd>
+        <dt>Condition</dt><dd>$4032 bit 1 set after a busy wait of ~178 iterations</dd>
+        <dt>Detail</dt><dd>Raw branch to $E781.</dd>
+      </dl>
+    </details>
   </article>
   <article>
     <h3 id="err-31">ERR.31 &mdash; A program asked for more files than the disk holds</h3>
@@ -989,12 +1091,15 @@
       <li>Nothing is interrupted: the drive keeps running and the game simply gets a refusal back.</li>
       <li>The screen shows only the number, with no message above it.</li>
     </ul>
-    <h4>In the ROM</h4>
-    <dl>
-      <dt>Raise site</dt><dd>$E2DE AdjustFileCount</dd>
-      <dt>Condition</dt><dd>requested count &gt; count present on disk</dd>
-      <dt>Detail</dt><dd>Returned via TXA / RTS at $E2F5, never through the throw block at $E778.</dd>
-    </dl>
+    <details>
+      <summary>Technical detail</summary>
+      <p>AdjustFileCount subtracts the requested count from the count present and returns the code in A via TXA/RTS at $E2F5. It never enters the throw block at $E778, so the drive is left running.</p>
+      <dl>
+        <dt>Raise site</dt><dd>$E2DE AdjustFileCount</dd>
+        <dt>Condition</dt><dd>requested count &gt; count present on disk</dd>
+        <dt>Detail</dt><dd>Returned via TXA / RTS at $E2F5, never through the throw block at $E778.</dd>
+      </dl>
+    </details>
   </article>
 </section>
 
@@ -1062,6 +1167,7 @@ const CODES = [
       "The system cannot tell 'no disk' apart from 'disk in, switch not pressed'."
     ],
     tech: {
+      concept: "The drive reports its state in a status register at $4032; bit 0 is the disk-present line. The BIOS only reads that bit \u2014 nothing in the ROM touches the sensing mechanism itself.",
       site: "$E678 DriveReadyWait \u00b7 $E42A SetupWriteParams \u00b7 $E757 WriteBlockEnd",
       test: "$4032 bit 0 set",
       extra: "Carry gate at $E77C from DriveReadyWait and WriteBlockEnd; return-address discard at $E43E from the API prologue."
@@ -1084,6 +1190,7 @@ const CODES = [
       "Also appears when power is present but not reaching the drive properly."
     ],
     tech: {
+      concept: "Not a voltage measurement. The BIOS drives bit 7 out to the expansion connector at $4026 and reads the same line back from $4033, so what is really being tested is a loopback across that path.",
       site: "$E669 DriveReadyWait",
       test: "write $F9|$80 \u2192 $4026, then EOR $4033, test bit 7",
       extra: "Carry gate at $E77C."
@@ -1106,6 +1213,7 @@ const CODES = [
       "The drive feels for the tab with a small lever, which can stick when dirty and report protection on a perfectly good disk."
     ],
     tech: {
+      concept: "The protect state arrives as bit 2 of the drive status register $4032. That same bit reads 1 for an ejected disk, so at this bit alone the two conditions cannot be told apart.",
       site: "$E435 SetupWriteParams",
       test: "$4032 bit 2 set (Protect flag)",
       extra: "Reached only when the read/write flag is clear; $E433 BCS skips it for reads. Per the NESdev Wiki the same flag reads 1 for a broken tab or an ejected disk."
@@ -1127,6 +1235,7 @@ const CODES = [
       "Games choose which details to check, so many never produce this at all."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 0 (header offset $0F)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Code comes from the running counter in $08, initialised to 4. Boot template at $EFF5 is FF FF FF FF FF FF 00 00 FF FF."
@@ -1147,6 +1256,7 @@ const CODES = [
       "It cannot tell you which part did not match."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, bytes 1\u20134 (header offsets $10\u2013$13)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "The counter increment at $E46D is suppressed for these four positions."
@@ -1168,6 +1278,7 @@ const CODES = [
       "Most games do not check this."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 5 (header offset $14)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Boot template byte 5 at $EFF5 is $FF."
@@ -1190,6 +1301,7 @@ const CODES = [
       "One of only four errors that names the problem on screen instead of showing a bare number."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 6 (header offset $15)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Message string 'A.B SIDE' at $F02E+16. Boot template byte 6 at $EFF5 is $00, not a wildcard."
@@ -1211,6 +1323,7 @@ const CODES = [
       "The number on the label is the one the game means."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 7 (header offset $16)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Message string 'DISK NO.' at $F02E+24. Boot template byte 7 at $EFF5 is $00, not a wildcard."
@@ -1232,6 +1345,7 @@ const CODES = [
       "Both kinds are perfectly good disks. This is not damage."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 8 (header offset $17)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Documented as 'disk type (FMC)': $01 for FMC blue-disk releases, $00 otherwise."
@@ -1253,6 +1367,7 @@ const CODES = [
       "Very rarely seen."
     ],
     tech: {
+      concept: "A caller passes a ten-byte template describing the disk it expects, and CheckDiskHeader walks the disk's identity fields against it. A template byte of $FF is a wildcard and skips that comparison. The error code is a counter that advances through the walk, which is how each field gets its own number.",
       site: "$E445 CheckDiskHeader, byte 9 (header offset $18)",
       test: "disk byte \u2260 caller template byte, and template byte \u2260 $FF",
       extra: "Documented as unknown, $00 in all known games. $E45B rewrites the counter value $0A to $10 before the gate."
@@ -1274,6 +1389,7 @@ const CODES = [
       "The screen still reads DISK TROUBLE, which is misleading \u2014 the disk is fine."
     ],
     tech: {
+      concept: "The check compares $E0 bytes of the game's own nametable at VRAM $2800 against a tile table at $ED37. It runs from RESET after LoadFiles has already returned success, which is why it is a boot-path gate and unreachable from a running game.",
       site: "$EF6A RESET (raised) \u2192 $F431 CopyrightCheck (decided)",
       test: "video memory $2800\u2013$28DF \u2260 tile table at $ED37",
       extra: "$ED37 spells 'NINTENDO' and 'FAMILY CO\u2026' in the BIOS tile encoding."
@@ -1295,6 +1411,7 @@ const CODES = [
       "What you would expect from a blank disk, a badly worn one, or a disk from another system."
     ],
     tech: {
+      concept: "The 14-byte magic string is held reversed at $E6D5, because the compare loop counts Y down from $0D while the disk streams forward. One constant code covers all fourteen comparisons.",
       site: "$E6FA ReadVerifyDiskInfo",
       test: "disk byte \u2260 table byte at $E6D5+Y, for Y = $0D down to 0",
       extra: "The table stores '*NINTENDO-HVC*' reversed, because the loop counts down while the disk streams forward."
@@ -1316,6 +1433,7 @@ const CODES = [
       "ERR.22 to ERR.25 are the same check at four points in the sequence."
     ],
     tech: {
+      concept: "Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.",
       site: "$E697 ReadBlockType",
       test: "tag byte read \u2260 expected block type",
       extra: "Code = block type + $21 via CLC / ADC #$21."
@@ -1335,6 +1453,7 @@ const CODES = [
     ],
     notes: [],
     tech: {
+      concept: "Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.",
       site: "$E697 ReadBlockType",
       test: "tag byte read \u2260 expected block type",
       extra: "Code = block type + $21."
@@ -1356,6 +1475,7 @@ const CODES = [
       "The label and the contents are stored separately, which is why a missing label and missing contents are different numbers."
     ],
     tech: {
+      concept: "Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.",
       site: "$E697 ReadBlockType",
       test: "tag byte read \u2260 expected block type",
       extra: "Code = block type + $21."
@@ -1375,6 +1495,7 @@ const CODES = [
     ],
     notes: [],
     tech: {
+      concept: "Every block opens with a type byte: 1 disk info, 2 file amount, 3 file header, 4 file data. ReadBlockType computes the error as blocktype + $21, which is why these four form a contiguous run.",
       site: "$E697 ReadBlockType",
       test: "tag byte read \u2260 expected block type",
       extra: "Code = block type + $21."
@@ -1396,6 +1517,7 @@ const CODES = [
       "It cannot tell you which part of the save failed."
     ],
     tech: {
+      concept: "WriteVerifyBlock re-reads each written byte and compares it against whichever source it came from \u2014 the file header, the caller's parameter list, CPU RAM via [$0A], or PPUDATA. Four separate compare sites share the one code.",
       site: "$E5C0 \u00b7 $E5D2 \u00b7 $E5FC \u00b7 $E62B, all in WriteVerifyBlock",
       test: "byte read back \u2260 byte written",
       extra: "All four go through the zero gate at $E77F."
@@ -1417,6 +1539,7 @@ const CODES = [
       "Cleaning the disk is worth trying. Beyond that, the data itself has degraded."
     ],
     tech: {
+      concept: "Each block ends with a CRC. The BIOS arms CRC-check mode via FDS_CONTROL bit 4, reads one further byte, then tests $4030 bit 4. A read is attempted twice ($0005 = 2) before the code escapes to the caller.",
       site: "$E71E CheckBlockEnd",
       test: "$4030 bit 4 set after arming CRC control",
       extra: "Reached by a raw branch to $E781, bypassing both throw gates."
@@ -1438,6 +1561,7 @@ const CODES = [
       "Different from ERR.27: this is data that is too short, that is data that is wrong."
     ],
     tech: {
+      concept: "$4030 bit 6 is the end-of-block mark. Two sites in the read path test it \u2014 the block trailer check and the byte-copy loop \u2014 and both branch straight into the abort at $E781, bypassing the usual gates.",
       site: "$E709 CheckBlockEnd \u00b7 $E766 ReadBlockToRAM",
       test: "$4030 bit 6 set while bytes remain",
       extra: "Both sites branch raw to $E781."
@@ -1459,6 +1583,7 @@ const CODES = [
       "ERR.28 is this same thing happening while loading."
     ],
     tech: {
+      concept: "The same $4030 bit 6 end-of-block mark that produces ERR.28, tested on the write side instead.",
       site: "$E72C WriteBlockEnd",
       test: "$4030 bit 6 set during a write",
       extra: "Raw branch to $E781."
@@ -1480,6 +1605,7 @@ const CODES = [
       "The screen shows only the number, with no message above it."
     ],
     tech: {
+      concept: "Tests $4032 bit 1 (drive not ready) after a busy wait of roughly 178 loop iterations. That delay is instruction-counted rather than timed, so its real duration varies with the machine.",
       site: "$E743 WriteBlockEnd",
       test: "$4032 bit 1 set after a busy wait of ~178 iterations",
       extra: "Raw branch to $E781."
@@ -1501,6 +1627,7 @@ const CODES = [
       "The screen shows only the number, with no message above it."
     ],
     tech: {
+      concept: "AdjustFileCount subtracts the requested count from the count present and returns the code in A via TXA/RTS at $E2F5. It never enters the throw block at $E778, so the drive is left running.",
       site: "$E2DE AdjustFileCount",
       test: "requested count > count present on disk",
       extra: "Returned via TXA / RTS at $E2F5, never through the throw block at $E778."
@@ -1593,14 +1720,15 @@ function render(entry) {
       <div class="blk"><h3>What it means</h3>${paras(entry.meaning)}</div>
       <div class="blk"><h3>What triggers it</h3>${paras(entry.trigger)}</div>
       ${notes}
-      <div class="blk">
-        <h3>In the ROM</h3>
+      <details class="techbox">
+        <summary>Technical detail</summary>
+        ${t.concept ? `<p class="tech-concept">${esc(t.concept)}</p>` : ''}
         <dl class="tech">
           <dt>Raise site</dt><dd>${esc(t.site || '\u2014')}</dd>
           <dt>Condition</dt><dd>${esc(t.test || '\u2014')}</dd>
           ${t.extra ? `<dt>Detail</dt><dd>${esc(t.extra)}</dd>` : ''}
         </dl>
-      </div>
+      </details>
     </div>`;
 }
 
