@@ -1,0 +1,418 @@
+# FDS Error Code Explorer
+
+> What every Famicom Disk System error code means, in plain language: what triggers it, what the screen shows, and where the fault actually lives.
+
+Source: https://stephen-arsenault.github.io/fds-error-explorer/
+
+Behaviour is traced from static analysis of one 8 KB Famicom Disk System
+BIOS image (`disksys.rom`), mapped at $E000; nothing was executed or
+emulated. Physical details of the media and drive come from the NESdev
+Wiki and community hardware documentation.
+
+Codes $0A-$0F, $35 and $40 appear in circulating tables but have no raise
+site in this ROM and cannot occur. $35 is not an error: it is the
+warm-boot signature written to $0102.
+
+## Categories
+
+- **Drive & power** (3 codes) — the hardware, before any data is read
+- **Wrong disk** (7 codes) — the disk is readable, but it isn't the one asked for
+- **Unreadable data** (7 codes) — the right disk, but the bytes came back wrong
+- **Saving failed** (3 codes) — only ever raised while writing to the disk
+- **Software rule** (2 codes) — nothing physical is wrong; a check in software said no
+
+## Codes
+
+### ERR.01 — The drive doesn't think there's a disk in it
+
+- Category: Drive & power
+- When: at start-up and during play
+- On screen: DISK SET / ERR.01
+
+The drive reports an empty slot. The console never looks at the disk itself — it reads one yes/no signal from a detection switch that closes when a disk is pushed fully home.
+
+So a disk that isn't seated all the way, or a switch gone dirty or worn, looks exactly like no disk at all. That is why you can be staring at a disk in the drive and still get this.
+
+**What triggers it.** The BIOS asks three times: at spin-up, when a program calls in, and again after every block it finishes. The last of those runs throughout a load, so pulling the disk out mid-load produces the same code as never inserting one.
+
+**Worth knowing.**
+
+- The system cannot tell 'no disk' apart from 'disk present, switch not tripped'. Both look identical to it.
+- A disk that is detected but never becomes ready is a different condition, and the BIOS waits forever rather than reporting anything.
+
+**In the ROM.** raise site $E678 DriveReadyWait · $E42A SetupWriteParams · $E757 WriteBlockEnd condition: $4032 bit 0 set Carry gate at $E77C from DriveReadyWait and WriteBlockEnd; return-address discard at $E43E from the API prologue.
+
+### ERR.02 — The drive isn't receiving proper power
+
+- Category: Drive & power
+- When: at start-up and during play
+- On screen: BATTERY / ERR.02
+
+An electrical check on the drive side failed, before the disk is touched at all. The practical meaning is that the drive is not getting the power it needs.
+
+BATTERY on screen is too specific. The unit runs from cells or a mains adapter and the code is identical either way, so read the word as 'power' rather than as an instruction to change batteries.
+
+**What triggers it.** The BIOS sends a signal to the drive side and immediately reads it back. A mismatch stops the boot. Being a signal test rather than a voltage measurement, anything interrupting the path counts: a dead adapter, flat cells, corroded contacts, dirty connector pins.
+
+**Worth knowing.**
+
+- Runs before any disk access, so it says nothing about the disk, drive mechanism or media.
+- Does not distinguish 'no power' from 'power present but not reaching the drive'.
+
+**In the ROM.** raise site $E669 DriveReadyWait condition: write $F9|$80 → $4026, then EOR $4033, test bit 7 Carry gate at $E77C.
+
+### ERR.03 — Something tried to save to a protected disk
+
+- Category: Drive & power
+- When: only from a running game
+- On screen: ERR.03 with no message line
+
+A program asked to save and the drive reports the disk is protected. The BIOS refuses before touching the media — nothing was written, nothing damaged.
+
+To check by eye: hold the disk as it goes into the drive and look at the upper-left corner of the side facing in. Tab still attached means writable. A gap where it used to be means protected.
+
+**What triggers it.** The check runs at the entry to a write call and exists only on the write path — reads jump over it. So a protected disk is invisible while loading and an instant failure the moment a save is attempted.
+
+**Worth knowing.**
+
+- Hole open = protected. The tab does not go back on once removed, but covering the opening with tape makes the disk writable again.
+- The drive senses the tab with a mechanical lever; a dirty or sticking lever reports protection on an intact disk.
+- The same status bit is also set when the disk is ejected.
+
+**In the ROM.** raise site $E435 SetupWriteParams condition: $4032 bit 2 set (Protect flag) Reached only when the read/write flag is clear; $E433 BCS skips it for reads. Per the NESdev Wiki the same flag reads 1 for a broken tab or an ejected disk.
+
+### ERR.04 — The disk was published by someone other than the game expected
+
+- Category: Wrong disk
+- When: only from a running game
+- On screen: ERR.04 with no message line
+
+Every disk records a code for who published it. A running game asked for one publisher's disk and the disk you inserted says someone else.
+
+In practice: a disk-swap prompt answered with something unrelated.
+
+**What triggers it.** A running game hands the BIOS a ten-byte template of the disk it expects. The BIOS walks the disk's identification fields against it and stops at the first mismatch. This is the first field checked.
+
+**Worth knowing.**
+
+- A game can mark any identification field 'don't care', so whether this check happens at all is the game's decision.
+- The field is the disk's licensee code.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 0 (header offset $0F) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Code comes from the running counter in $08, initialised to 4. Boot template at $EFF5 is FF FF FF FF FF FF 00 00 FF FF.
+
+### ERR.05 — This disk belongs to a different game
+
+- Category: Wrong disk
+- When: only from a running game
+- On screen: ERR.05 with no message line
+
+The short name written in the disk data doesn't match the one a running game asked for. Plainly: you inserted a disk from another title.
+
+**What triggers it.** Four consecutive identification bytes — the game's three-letter name and its type marker — all report through this one code, so any of them failing lands here.
+
+**Worth knowing.**
+
+- Four distinct fields share this one number, so it cannot tell you which of them mismatched. Every other identification field gets its own code.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, bytes 1–4 (header offsets $10–$13) condition: disk byte ≠ caller template byte, and template byte ≠ $FF The counter increment at $E46D is suppressed for these four positions.
+
+### ERR.06 — The disk is a different revision of the game
+
+- Category: Wrong disk
+- When: only from a running game
+- On screen: ERR.06 with no message line
+
+Same title, different revision. A running game expects its own version and this disk reports another.
+
+Rare in practice: it needs two printings of one game, and a game that bothers to check.
+
+**What triggers it.** One identification byte records a revision number, and the template the running game supplied names a specific one.
+
+**Worth knowing.**
+
+- The field is the game version byte, incremented per revision.
+- A game can mark it 'don't care', and most do.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 5 (header offset $14) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Boot template byte 5 at $EFF5 is $FF.
+
+### ERR.07 — The disk is in the wrong way round — flip it
+
+- Category: Wrong disk
+- When: at start-up and during play
+- On screen: A·B SIDE / ERR.07
+
+FDS disks are double-sided and each side is written separately, so a side is effectively its own disk. The system is looking at one and wants the other.
+
+The fix is what the screen says: take the disk out, turn it over, put it back. Switching the system on with the disk B-side-in gives you this too.
+
+**What triggers it.** One identification byte records which side faces in. At boot the BIOS supplies its own template requiring side A; mid-game, a title spanning both sides supplies its own and asks you to flip.
+
+**Worth knowing.**
+
+- One of only four codes that name the problem on screen instead of showing a bare number.
+- If a game prompts you to flip and you reinsert the same side, you get this again — mid-play the game handles it, so what appears on screen is up to the game.
+- Each side is written independently, so the two sides of one disk can be in different condition.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 6 (header offset $15) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Message string 'A.B SIDE' at $F02E+16. Boot template byte 6 at $EFF5 is $00, not a wildcard.
+
+### ERR.08 — Wrong disk in a multi-disk set
+
+- Category: Wrong disk
+- When: at start-up and during play
+- On screen: DISK NO. / ERR.08
+
+Larger games shipped across more than one disk, numbered within the set. The game asked for one of them and the disk you inserted is a different one.
+
+Insert the disk the game asked for. Switching the system on with anything but the first disk of a set gives you this too.
+
+**What triggers it.** One identification byte numbers the disk within its set. At boot the BIOS requires the first disk; mid-game the running title supplies its own number when it prompts for a swap.
+
+**Worth knowing.**
+
+- One of only four codes that name the problem on screen instead of showing a bare number.
+- Disks are numbered from the first, so the number on the label is what the game is asking for.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 7 (header offset $16) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Message string 'DISK NO.' at $F02E+24. Boot template byte 7 at $EFF5 is $00, not a wildcard.
+
+### ERR.09 — The disk is the wrong physical kind of Disk Card
+
+- Category: Wrong disk
+- When: only from a running game
+- On screen: ERR.09 with no message line
+
+The field has exactly two values: an ordinary yellow Disk Card, or a blue one. A running game wanted one kind and got the other.
+
+Blue cards carry a sliding shutter over the media opening and lack the small protruding part along the top edge, so they are obvious by eye.
+
+**What triggers it.** Blue cards existed for Nintendo's national high-score competitions — a short series of titles you carried to a Disk Fax kiosk, which read your score off the card. Only those games have any reason to check this field, which is why the code is so rarely seen.
+
+**Worth knowing.**
+
+- Effectively a yes/no field: there is no wider taxonomy of disk 'types' behind it.
+- Never a sign of damage — both kinds are valid disks, just not the one asked for.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 8 (header offset $17) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Documented as 'disk type (FMC)': $01 for FMC blue-disk releases, $00 otherwise.
+
+### ERR.10 — A reserved header field doesn't match
+
+- Category: Wrong disk
+- When: only from a running game
+- On screen: ERR.10 with no message line
+
+The last identification byte is the one field with no known purpose. It reads $00 on every commercial game examined, and nobody has established what it was reserved for.
+
+**What triggers it.** Producing it requires a game to deliberately demand a non-$00 value here, which no known release does. In practice it points at a homebrew, modified or non-standard disk rather than the wrong retail title.
+
+**Worth knowing.**
+
+- Very rarely seen: it needs a game to check a field that has no defined meaning.
+- The numbering jumps from $09 straight to $10 here — there are no codes in between.
+
+**In the ROM.** raise site $E445 CheckDiskHeader, byte 9 (header offset $18) condition: disk byte ≠ caller template byte, and template byte ≠ $FF Documented as unknown, $00 in all known games. $E45B rewrites the counter value $0A to $10 before the gate.
+
+### ERR.20 — The game loaded fine but didn't show the required Nintendo screen
+
+- Category: Software rule
+- When: start-up only
+- On screen: DISK TROUBLE / ERR.20
+
+Not a disk error at all. The data read perfectly and the game is already in memory.
+
+Before handing over control, the BIOS inspects the screen the game has drawn and checks it contains Nintendo's copyright notice. If the text isn't there it refuses to start the game.
+
+**What triggers it.** The BIOS compares a run of the game's own on-screen tile data, character by character, against a copy held in the ROM. A single mismatch is enough — unlicensed disks that skipped the screen stop here.
+
+**Worth knowing.**
+
+- It runs after a completely successful load, so it says nothing about the drive, the disk or the media.
+- The screen still reads DISK TROUBLE, even though there is nothing wrong with the disk.
+
+**In the ROM.** raise site $EF6A RESET (raised) → $F431 CopyrightCheck (decided) condition: video memory $2800–$28DF ≠ tile table at $ED37 $ED37 spells 'NINTENDO' and 'FAMILY CO…' in the BIOS tile encoding.
+
+### ERR.21 — The data doesn't start with the Nintendo signature
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.21
+
+The data on every genuine FDS disk begins with a fixed 14-character marker. What was read back doesn't carry it — either this isn't an FDS disk, or the very start of the data is too damaged to read.
+
+**What triggers it.** Right after finding the first block, the BIOS reads fourteen bytes and compares them one at a time against a copy in the ROM. Any single character being wrong stops the load.
+
+**Worth knowing.**
+
+- All fourteen comparisons share this one code, so it can never say which character was wrong.
+- In practice this is what a blank disk, a badly degraded one, or a non-Nintendo disk produces.
+
+**In the ROM.** raise site $E6FA ReadVerifyDiskInfo condition: disk byte ≠ table byte at $E6D5+Y, for Y = $0D down to 0 The table stores '*NINTENDO-HVC*' reversed, because the loop counts down while the disk streams forward.
+
+### ERR.22 — The identification block wasn't where it should be
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.22
+
+Disk data is laid out as a strict sequence of blocks, each tagged with a number saying what kind it is. The BIOS was expecting the identification block, and the block it found is tagged as a different kind.
+
+**What triggers it.** Before reading any block the BIOS checks its tag byte against the kind due next. The identification block is the very first thing on a disk, so failing this early usually means the data is unreadable from the start rather than damaged part-way through.
+
+**Worth knowing.**
+
+- $22 to $25 are all the same check. Only the kind of block that was expected differs, which is what sets them apart.
+
+**In the ROM.** raise site $E697 ReadBlockType condition: tag byte read ≠ expected block type Code = block type + $21 via CLC / ADC #$21.
+
+### ERR.23 — The file-count block wasn't where it should be
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.23
+
+Once the identification block has been read, the next thing due is a block stating how many files follow. The BIOS was expecting that file-count block, and the block it found is tagged as a different kind.
+
+**What triggers it.** Reaching this point means the identification block read correctly, so the disk is the right one and readable — the data stops making sense immediately after it.
+
+**Worth knowing.**
+
+- One of four related codes ($22 to $25), told apart by which kind of block was expected.
+
+**In the ROM.** raise site $E697 ReadBlockType condition: tag byte read ≠ expected block type Code = block type + $21.
+
+### ERR.24 — A file's header block wasn't where it should be
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.24
+
+Each file on the disk contains a small header at the beginning of its data. The BIOS expected the header and found something else.
+
+**What triggers it.** The tag byte named a different kind from the file header due next. Usually a sign of damage part-way through, since everything before it read correctly.
+
+**Worth knowing.**
+
+- Getting this far means the disk identified itself correctly — the problem is deeper in.
+- The header and the file's contents are written as two separate blocks, which is why a missing header and missing contents are different codes ($24 and $25).
+
+**In the ROM.** raise site $E697 ReadBlockType condition: tag byte read ≠ expected block type Code = block type + $21.
+
+### ERR.25 — A file's data block wasn't where it should be
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.25
+
+A file's header read correctly, so the BIOS knows a file is coming and how big it should be. It was then expecting that file's data, and the block it found is tagged as a different kind.
+
+**What triggers it.** The tag byte named a different kind from the file data due next — the header and its contents have become separated.
+
+**Worth knowing.**
+
+- The furthest along of the four related codes: everything up to and including this file's header read correctly.
+
+**In the ROM.** raise site $E697 ReadBlockType condition: tag byte read ≠ expected block type Code = block type + $21.
+
+### ERR.26 — What was written didn't read back correctly
+
+- Category: Saving failed
+- When: only from a running game
+- On screen: DISK TROUBLE / ERR.26
+
+After writing, the BIOS reads the same data straight back and compares it. It didn't match, so the save cannot be trusted.
+
+On real hardware this points at a worn disk surface or a drive out of alignment.
+
+**What triggers it.** Every write is followed by a verification pass over the same bytes, and any single byte differing stops the operation.
+
+**Worth knowing.**
+
+- The same code covers every kind of data a save can contain, so it cannot tell you which part failed to verify.
+
+**In the ROM.** raise site $E5C0 · $E5D2 · $E5FC · $E62B, all in WriteVerifyBlock condition: byte read back ≠ byte written All four go through the zero gate at $E77F.
+
+### ERR.27 — A block's contents failed its integrity check
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.27
+
+Each block carries a checksum, and the data read back doesn't match it — at least one byte is wrong.
+
+This is the usual sign that a disk has degraded: magnetic decay, a scratch, or dirt on the surface.
+
+**What triggers it.** At the end of every block the BIOS switches the drive into checksum-verify mode, reads one more byte, and asks the hardware whether the block held together.
+
+**Worth knowing.**
+
+- Reads are retried twice before the code is reported, so a fault that reaches the screen has already failed more than once.
+
+**In the ROM.** raise site $E71E CheckBlockEnd condition: $4030 bit 4 set after arming CRC control Reached by a raw branch to $E781, bypassing both throw gates.
+
+### ERR.28 — The block ended before all its data arrived
+
+- Category: Unreadable data
+- When: at start-up and during play
+- On screen: DISK TROUBLE / ERR.28
+
+The drive signalled the end of a block while the BIOS was still expecting more bytes — the block is shorter than the data claimed it would be.
+
+Physically this usually means damage, or the drive losing sync with the track part-way through.
+
+**What triggers it.** The BIOS watches an end-of-block flag while reading. Seeing it raised before the expected byte count is exhausted stops the read immediately.
+
+**Worth knowing.**
+
+- The same code covers two slightly different points in the read, so it does not pinpoint where the data ran out.
+- Distinct from $27: this is 'too short', that is 'wrong contents'.
+
+**In the ROM.** raise site $E709 CheckBlockEnd · $E766 ReadBlockToRAM condition: $4030 bit 6 set while bytes remain Both sites branch raw to $E781.
+
+### ERR.29 — The block ended early while writing
+
+- Category: Saving failed
+- When: only from a running game
+- On screen: DISK TROUBLE / ERR.29
+
+The drive signalled the end of the writable area before the BIOS had finished writing the block. In plain terms, the disk ran out of room mid-save.
+
+**What triggers it.** The same end-of-block flag that produces $28 on a read, watched during a write instead.
+
+**Worth knowing.**
+
+- $28 is this same fault while reading; this one is the writing version.
+- A save interrupted here leaves the disk partially written.
+
+**In the ROM.** raise site $E72C WriteBlockEnd condition: $4030 bit 6 set during a write Raw branch to $E781.
+
+### ERR.30 — The drive stopped being ready during a save
+
+- Category: Saving failed
+- When: only from a running game
+- On screen: ERR.30 with no message line
+
+Part-way through finishing a write, the drive reported it was no longer ready to continue. The save is incomplete.
+
+**What triggers it.** After writing the checksum the BIOS waits a fixed moment, then asks the drive whether it is still ready.
+
+**Worth knowing.**
+
+- The wait is a fixed length rather than a measured one, so a marginal drive may pass or fail it inconsistently.
+- The screen shows only the number, with no message above it.
+
+**In the ROM.** raise site $E743 WriteBlockEnd condition: $4032 bit 1 set after a busy wait of ~178 iterations Raw branch to $E781.
+
+### ERR.31 — A program asked for more files than the disk holds
+
+- Category: Software rule
+- When: only from a running game
+- On screen: ERR.31 with no message line
+
+The running program requested a number of files and the disk doesn't contain that many. Nothing is broken — the request was impossible.
+
+**What triggers it.** The BIOS counts the files present and subtracts what was asked for. If the request is larger, it reports this code.
+
+**Worth knowing.**
+
+- Nothing is interrupted: the drive keeps running and the program simply gets a refusal back, unlike every other code here.
+- The screen shows only the number, with no message above it.
+
+**In the ROM.** raise site $E2DE AdjustFileCount condition: requested count > count present on disk Returned via TXA / RTS at $E2F5, never through the throw block at $E778.
