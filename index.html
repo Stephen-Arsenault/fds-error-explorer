@@ -382,6 +382,51 @@
   }
   .footer-cols p { margin: 0; max-width: 62ch; }
   footer a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  footer details { margin-top: 11px; }
+  footer summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  footer summary::-webkit-details-marker { display: none; }
+  footer summary::before {
+    content: "\002B";
+    font-size: 12px;
+    line-height: 1;
+    color: var(--accent);
+  }
+  footer details[open] summary::before { content: "\2212"; }
+  footer summary:hover { color: var(--ink); }
+  footer summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  footer details ul {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+  }
+  footer details li {
+    position: relative;
+    padding-left: 15px;
+    max-width: 62ch;
+  }
+  footer details li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 8px;
+    height: 1px;
+    background: var(--rule-2);
+  }
+  footer details strong { color: var(--ink-2); font-weight: 600; }
   footer a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   code {
     font-family: var(--mono); font-size: 0.9em;
@@ -446,12 +491,44 @@
         meaning is inferred from its position rather than confirmed by the ROM's own text, the entry
         says so.
       </p>
-      <p>
-        Physical details of the media, drive mechanism and connector are not derivable from the ROM
-        and come from the
-        <a href="https://www.nesdev.org/wiki/Family_Computer_Disk_System">NESdev Wiki</a>
-        and community hardware documentation.
-      </p>
+      <div>
+        <p>
+          Some details cannot be derived from the ROM at all &mdash; what the disk's header fields
+          are called, what the media physically looks like, and how the drive senses it. Those come
+          from the <a href="https://www.nesdev.org/wiki/Family_Computer_Disk_System">NESdev Wiki</a>
+          and community hardware documentation.
+        </p>
+        <details>
+          <summary>Exactly what came from those sources</summary>
+          <ul>
+            <li>
+              The disk-info header's <strong>field names and offsets</strong> ($0F licensee code
+              through $18). Which error code guards which byte is from the ROM; the names are the
+              format spec's. Only $07 (side) and $08 (disk number) are independently confirmed by
+              the BIOS's own message strings.
+            </li>
+            <li>
+              The two values of the <strong>disk type</strong> field at $17 &mdash; $01 for blue-disk
+              (FMC) releases, $00 otherwise.
+            </li>
+            <li>
+              That the field at <strong>$18 has no known purpose</strong> and reads $00 on every
+              commercial game examined. That is essentially all of ERR.10.
+            </li>
+            <li>
+              The <strong>write-protect tab</strong>: where it sits on the card, that a broken tab
+              means protected, the tape repair, and the sensing lever that misreports when dirty.
+            </li>
+            <li>
+              That the protect bit in $4032 <strong>also reads 1 for an ejected disk</strong>.
+            </li>
+            <li>
+              <strong>Blue Disk Cards</strong>: the sliding shutter, the missing top-edge protrusion,
+              and the Disk Fax high-score service they were made for.
+            </li>
+          </ul>
+        </details>
+      </div>
     </div>
   </footer>
 
