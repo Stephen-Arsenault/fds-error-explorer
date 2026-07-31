@@ -413,27 +413,29 @@ Each block ends with a CRC. The BIOS arms CRC-check mode via FDS_CONTROL bit 4, 
 
 Raise site: $E71E CheckBlockEnd. Condition: $4030 bit 4 set after arming CRC control. Reached by a raw branch to $E781, bypassing both throw gates.
 
-### ERR.28 — Data stopped sooner than expected
+### ERR.28 — The drive reached the end of the disk
 
 - Category: Unreadable data
 - When: at start-up and during play
 - On screen: DISK TROUBLE / ERR.28
 
-A chunk of data ended while the system was still expecting more of it — there is less on the disk than the disk itself claimed.
+While reading, the drive's head ran all the way to the innermost track — the physical end of the recorded surface — before it had collected everything it was told to expect.
 
-Usually damage, or the drive losing its place partway through.
+Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should.
 
-**What triggers it.** The system watches for an end marker while reading, and saw it before it had read everything it was told to expect.
+**What triggers it.** The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end.
 
 **Worth knowing.**
 
-- Different from ERR.27: this is data that is too short, that is data that is wrong.
+- Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.
+- ERR.29 is this same condition while saving.
+- A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault.
 
 **Technical detail.**
 
-$4030 bit 6 is the end-of-block mark. Two sites in the read path test it — the block trailer check and the byte-copy loop — and both branch straight into the abort at $E781, bypassing the usual gates.
+$4030 bit 6 is the End of Head line, set when the head reaches the innermost track. Three sites test it: the block trailer check on the read path, the same on the write path, and the byte-copy loop, which tests it after every byte stored. All three branch straight into the abort at $E781, bypassing the usual gates.
 
-Raise site: $E709 CheckBlockEnd · $E766 ReadBlockToRAM. Condition: $4030 bit 6 set while bytes remain. Both sites branch raw to $E781.
+Raise site: $E709 CheckBlockEnd · $E766 ReadBlockToRAM. Condition: $4030 bit 6 set (End of Head). Both read-path sites branch raw to $E781. Widely circulated tables describe $27 as 'block end mark seen but ends prematurely'; the ROM tests the CRC line for $27 and the head-position line here.
 
 ### ERR.29 — The disk ran out of room while saving
 
@@ -441,20 +443,20 @@ Raise site: $E709 CheckBlockEnd · $E766 ReadBlockToRAM. Condition: $4030 bit 6 
 - When: only from a running game
 - On screen: DISK TROUBLE / ERR.29
 
-A save stopped partway because there was no more space to write into.
+The drive's head reached the innermost track — the physical end of the recorded surface — before the save had finished writing.
 
-**What triggers it.** The drive signalled the end of the writable area before the system had finished writing.
+**What triggers it.** The same head-position check that produces ERR.28 while loading, applied on the way out instead.
 
 **Worth knowing.**
 
 - The save is incomplete and the disk is left partly written.
-- ERR.28 is this same thing happening while loading.
+- ERR.28 is this same condition while loading.
 
 **Technical detail.**
 
-The same $4030 bit 6 end-of-block mark that produces ERR.28, tested on the write side instead.
+The same $4030 bit 6 End of Head line that produces ERR.28, tested on the write side. It is set when the head reaches the innermost track, so this is the drive running out of physical media rather than a filesystem-level capacity check.
 
-Raise site: $E72C WriteBlockEnd. Condition: $4030 bit 6 set during a write. Raw branch to $E781.
+Raise site: $E72C WriteBlockEnd. Condition: $4030 bit 6 set (End of Head), during a write. Raw branch to $E781.
 
 ### ERR.30 — The drive stopped being ready during a save
 

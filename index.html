@@ -925,24 +925,26 @@
     </details>
   </article>
   <article>
-    <h3 id="err-28">ERR.28 &mdash; Data stopped sooner than expected</h3>
+    <h3 id="err-28">ERR.28 &mdash; The drive reached the end of the disk</h3>
     <p class="se-meta"><strong>Where the problem lives:</strong> Unreadable data &middot; <strong>When:</strong> at start-up and during play &middot; <strong>On screen:</strong> DISK TROUBLE / ERR.28</p>
     <h4>What it means</h4>
-    <p>A chunk of data ended while the system was still expecting more of it — there is less on the disk than the disk itself claimed.</p>
-    <p>Usually damage, or the drive losing its place partway through.</p>
+    <p>While reading, the drive's head ran all the way to the innermost track — the physical end of the recorded surface — before it had collected everything it was told to expect.</p>
+    <p>Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should.</p>
     <h4>What triggers it</h4>
-    <p>The system watches for an end marker while reading, and saw it before it had read everything it was told to expect.</p>
+    <p>The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end.</p>
     <h4>Worth knowing</h4>
     <ul>
-      <li>Different from ERR.27: this is data that is too short, that is data that is wrong.</li>
+      <li>Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.</li>
+      <li>ERR.29 is this same condition while saving.</li>
+      <li>A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault.</li>
     </ul>
     <details>
       <summary>Technical detail</summary>
-      <p>$4030 bit 6 is the end-of-block mark. Two sites in the read path test it — the block trailer check and the byte-copy loop — and both branch straight into the abort at $E781, bypassing the usual gates.</p>
+      <p>$4030 bit 6 is the End of Head line, set when the head reaches the innermost track. Three sites test it: the block trailer check on the read path, the same on the write path, and the byte-copy loop, which tests it after every byte stored. All three branch straight into the abort at $E781, bypassing the usual gates.</p>
       <dl>
         <dt>Raise site</dt><dd>$E709 CheckBlockEnd · $E766 ReadBlockToRAM</dd>
-        <dt>Condition</dt><dd>$4030 bit 6 set while bytes remain</dd>
-        <dt>Detail</dt><dd>Both sites branch raw to $E781.</dd>
+        <dt>Condition</dt><dd>$4030 bit 6 set (End of Head)</dd>
+        <dt>Detail</dt><dd>Both read-path sites branch raw to $E781. Widely circulated tables describe $27 as 'block end mark seen but ends prematurely'; the ROM tests the CRC line for $27 and the head-position line here.</dd>
       </dl>
     </details>
   </article>
@@ -950,20 +952,20 @@
     <h3 id="err-29">ERR.29 &mdash; The disk ran out of room while saving</h3>
     <p class="se-meta"><strong>Where the problem lives:</strong> Saving failed &middot; <strong>When:</strong> only from a running game &middot; <strong>On screen:</strong> DISK TROUBLE / ERR.29</p>
     <h4>What it means</h4>
-    <p>A save stopped partway because there was no more space to write into.</p>
+    <p>The drive's head reached the innermost track — the physical end of the recorded surface — before the save had finished writing.</p>
     <h4>What triggers it</h4>
-    <p>The drive signalled the end of the writable area before the system had finished writing.</p>
+    <p>The same head-position check that produces ERR.28 while loading, applied on the way out instead.</p>
     <h4>Worth knowing</h4>
     <ul>
       <li>The save is incomplete and the disk is left partly written.</li>
-      <li>ERR.28 is this same thing happening while loading.</li>
+      <li>ERR.28 is this same condition while loading.</li>
     </ul>
     <details>
       <summary>Technical detail</summary>
-      <p>The same $4030 bit 6 end-of-block mark that produces ERR.28, tested on the write side instead.</p>
+      <p>The same $4030 bit 6 End of Head line that produces ERR.28, tested on the write side. It is set when the head reaches the innermost track, so this is the drive running out of physical media rather than a filesystem-level capacity check.</p>
       <dl>
         <dt>Raise site</dt><dd>$E72C WriteBlockEnd</dd>
-        <dt>Condition</dt><dd>$4030 bit 6 set during a write</dd>
+        <dt>Condition</dt><dd>$4030 bit 6 set (End of Head), during a write</dd>
         <dt>Detail</dt><dd>Raw branch to $E781.</dd>
       </dl>
     </details>
@@ -1459,25 +1461,27 @@ const CODES = [
     }
   },
   {
-    code: "$28", origin: "media", tag: "Ended early",
-    title: "Data stopped sooner than expected",
+    code: "$28", origin: "media", tag: "End of disk",
+    title: "The drive reached the end of the disk",
     screen: { msg: "DISK TROUBLE" },
     when: 'both',
     meaning: [
-      "A chunk of data ended while the system was still expecting more of it \u2014 there is less on the disk than the disk itself claimed.",
-      "Usually damage, or the drive losing its place partway through."
+      "While reading, the drive's head ran all the way to the innermost track \u2014 the physical end of the recorded surface \u2014 before it had collected everything it was told to expect.",
+      "Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should."
     ],
     trigger: [
-      "The system watches for an end marker while reading, and saw it before it had read everything it was told to expect."
+      "The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end."
     ],
     notes: [
-      "Different from ERR.27: this is data that is too short, that is data that is wrong."
+      "Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.",
+      "ERR.29 is this same condition while saving.",
+      "A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault."
     ],
     tech: {
-      concept: "$4030 bit 6 is the end-of-block mark. Two sites in the read path test it \u2014 the block trailer check and the byte-copy loop \u2014 and both branch straight into the abort at $E781, bypassing the usual gates.",
+      concept: "$4030 bit 6 is the End of Head line, set when the head reaches the innermost track. Three sites test it: the block trailer check on the read path, the same on the write path, and the byte-copy loop, which tests it after every byte stored. All three branch straight into the abort at $E781, bypassing the usual gates.",
       site: "$E709 CheckBlockEnd \u00b7 $E766 ReadBlockToRAM",
-      test: "$4030 bit 6 set while bytes remain",
-      extra: "Both sites branch raw to $E781."
+      test: "$4030 bit 6 set (End of Head)",
+      extra: "Both read-path sites branch raw to $E781. Widely circulated tables describe $27 as 'block end mark seen but ends prematurely'; the ROM tests the CRC line for $27 and the head-position line here."
     }
   },
   {
@@ -1486,19 +1490,19 @@ const CODES = [
     screen: { msg: "DISK TROUBLE" },
     when: 'game',
     meaning: [
-      "A save stopped partway because there was no more space to write into."
+      "The drive's head reached the innermost track \u2014 the physical end of the recorded surface \u2014 before the save had finished writing."
     ],
     trigger: [
-      "The drive signalled the end of the writable area before the system had finished writing."
+      "The same head-position check that produces ERR.28 while loading, applied on the way out instead."
     ],
     notes: [
       "The save is incomplete and the disk is left partly written.",
-      "ERR.28 is this same thing happening while loading."
+      "ERR.28 is this same condition while loading."
     ],
     tech: {
-      concept: "The same $4030 bit 6 end-of-block mark that produces ERR.28, tested on the write side instead.",
+      concept: "The same $4030 bit 6 End of Head line that produces ERR.28, tested on the write side. It is set when the head reaches the innermost track, so this is the drive running out of physical media rather than a filesystem-level capacity check.",
       site: "$E72C WriteBlockEnd",
-      test: "$4030 bit 6 set during a write",
+      test: "$4030 bit 6 set (End of Head), during a write",
       extra: "Raw branch to $E781."
     }
   },
