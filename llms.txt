@@ -421,7 +421,7 @@ Raise site: $E71E CheckBlockEnd. Condition: $4030 bit 4 set after arming CRC con
 
 While reading, the drive's head ran all the way to the innermost track — the physical end of the recorded surface — before it had collected everything it was told to expect.
 
-Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should.
+In other words the system was still waiting for data at the point where there is no more disk left to read.
 
 **What triggers it.** The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end.
 
@@ -429,7 +429,6 @@ Either the data was never fully written, or the drive is mistracking and reachin
 
 - Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.
 - ERR.29 is this same condition while saving.
-- A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault.
 
 **Technical detail.**
 

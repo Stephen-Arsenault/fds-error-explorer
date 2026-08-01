@@ -929,14 +929,13 @@
     <p class="se-meta"><strong>Where the problem lives:</strong> Unreadable data &middot; <strong>When:</strong> at start-up and during play &middot; <strong>On screen:</strong> DISK TROUBLE / ERR.28</p>
     <h4>What it means</h4>
     <p>While reading, the drive's head ran all the way to the innermost track — the physical end of the recorded surface — before it had collected everything it was told to expect.</p>
-    <p>Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should.</p>
+    <p>In other words the system was still waiting for data at the point where there is no more disk left to read.</p>
     <h4>What triggers it</h4>
     <p>The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end.</p>
     <h4>Worth knowing</h4>
     <ul>
       <li>Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.</li>
       <li>ERR.29 is this same condition while saving.</li>
-      <li>A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault.</li>
     </ul>
     <details>
       <summary>Technical detail</summary>
@@ -1467,15 +1466,14 @@ const CODES = [
     when: 'both',
     meaning: [
       "While reading, the drive's head ran all the way to the innermost track \u2014 the physical end of the recorded surface \u2014 before it had collected everything it was told to expect.",
-      "Either the data was never fully written, or the drive is mistracking and reaching the end sooner than it should."
+      "In other words the system was still waiting for data at the point where there is no more disk left to read."
     ],
     trigger: [
       "The head's position is checked after every single byte, so the system stops the moment it runs out of disk rather than reading past the end."
     ],
     notes: [
       "Different from ERR.27, where the data was there but came back corrupted. Here the data simply ran out.",
-      "ERR.29 is this same condition while saving.",
-      "A drive that mistracks can produce this on a perfectly good disk, so it is not proof the disk is at fault."
+      "ERR.29 is this same condition while saving."
     ],
     tech: {
       concept: "$4030 bit 6 is the End of Head line, set when the head reaches the innermost track. Three sites test it: the block trailer check on the read path, the same on the write path, and the byte-copy loop, which tests it after every byte stored. All three branch straight into the abort at $E781, bypassing the usual gates.",
